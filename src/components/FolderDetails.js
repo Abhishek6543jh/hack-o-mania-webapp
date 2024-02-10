@@ -1,75 +1,89 @@
-// FolderDetails.js
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 
-const FolderDetails = ({ folderId }) => {
-  const [folderData, setFolderData] = useState(null);
+const AllFolders = () => {
+  const [allFolders, setAllFolders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorStatus, setErrorStatus] = useState(null);
+  const [selectedFolder, setSelectedFolder] = useState(null);
 
   useEffect(() => {
-    const fetchFolderDetails = async () => {
+    const fetchAllFolders = async () => {
       setIsLoading(true);
       setErrorStatus(null);
 
       try {
-        const folderDocRef = doc(db, 'folders', folderId);
-        const folderSnapshot = await getDoc(folderDocRef);
+        const foldersCollection = collection(db, 'folders');
+        const foldersSnapshot = await getDocs(foldersCollection);
 
-        if (folderSnapshot.exists()) {
-          setFolderData({ id: folderSnapshot.id, ...folderSnapshot.data() });
-        } else {
-          setErrorStatus('Folder document does not exist.');
-        }
+        const foldersData = foldersSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setAllFolders(foldersData);
       } catch (error) {
-        setErrorStatus('Error fetching folder details: ' + error.message);
+        setErrorStatus('Error fetching all folders: ' + error.message);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchFolderDetails();
-  }, [folderId]);
+    fetchAllFolders();
+  }, []);
+
+  const handleFolderClick = (folderId) => {
+    setSelectedFolder((prevSelected) =>
+      prevSelected === folderId ? null : folderId
+    );
+  };
 
   return (
-    <div>
-      <h2>Folder Details</h2>
-      {isLoading && <p>Loading folder details...</p>}
+    <div className="container mx-auto p-6"> {/* Example container for layout */}
+      <h2>All Folders</h2>
+      {isLoading && <p>Loading folders...</p>}
       {errorStatus && <p className="error-message">{errorStatus}</p>}
 
-      {!isLoading && !errorStatus && folderData && (
-        <div>
-          <h3>{folderData.name}</h3>
-          <p>Description: {folderData.description || 'No description available'}</p>
+      {!isLoading && !errorStatus && (
+        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">  {/* Responsive grid */}
+          {allFolders.map((folder) => (
+            <li
+              key={folder.id}
+              className="border border-gray-200 p-4 rounded-md shadow-sm hover:bg-gray-100 cursor-pointer"
+              onClick={() => handleFolderClick(folder.id)}
+            >
+              <h3 className="text-lg font-medium">{folder.name}</h3>
 
-          <h4>Assigned Farmers:</h4>
-          <ul>
-            {folderData.assignedFarmers && folderData.assignedFarmers.length > 0 ? (
-              folderData.assignedFarmers.map((farmer) => (
-                <li key={farmer.id}>{farmer.displayName || farmer.email}</li>
-              ))
-            ) : (
-              <li>No assigned farmers</li>
-            )}
-          </ul>
+              {selectedFolder === folder.id && (
+                <div className="mt-3"> {/* Content shown on click */}
+                  <p className="text-gray-500">
+                    {folder.description || 'No description available'}
+                  </p>
 
-          <h4>Uploaded Images:</h4>
-          <ul>
-            {folderData.images && folderData.images.length > 0 ? (
-              folderData.images.map((image) => (
-                <li key={image.fileName}>
-                  <img src={image.imageUrl} alt={image.fileName} style={{ maxWidth: '200px' }} />
-                </li>
-              ))
-            ) : (
-              <li>No uploaded images</li>
-            )}
-          </ul>
-        </div>
+                  <ul className="mt-2">
+                    {folder.uploads && folder.uploads.length > 0 ? (
+                      folder.uploads.map((upload) => (
+                        <li key={upload.fileName}>
+                          <img
+                            src={upload.downloadURL}
+                            alt={upload.fileName}
+                            style={{ maxWidth: '200px' }}
+                          />
+                        </li>
+                      ))
+                    ) : (
+                      <li>No uploaded files</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
 };
 
-export default FolderDetails;
+export default AllFolders;
