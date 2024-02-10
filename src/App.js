@@ -1,12 +1,24 @@
+// App.jsx
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
-import './App.css';
 
-function App() {
+import { ChakraProvider } from '@chakra-ui/react'
+import Login from './components/Login';
+
+
+
+
+const App = () => {
   return (
-    <div className="App">
-      
-    </div>
+    <ChakraProvider>
+    <Router>
+      <Routes>
+      <Route path="/" element={<Login />} />
+      </Routes>
+      </Router>
+    </ChakraProvider>
   );
-}
+};
 
 export default App;
