@@ -1,30 +1,67 @@
 import React, { useState, useEffect } from 'react';
-import { db, storage } from '../firebase/config';
-import { collection, doc, getDocs, updateDoc, arrayUnion, query, where } from 'firebase/firestore';
+import { auth, db, storage } from '../firebase/config';
+import { collection, doc, getDocs, getDoc, query, where, updateDoc, arrayUnion } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-const FarmerDashboard = ({ farmerId }) => {
+const FarmerDashboard = () => {
   const [assignedFolders, setAssignedFolders] = useState([]);
   const [selectedFolder, setSelectedFolder] = useState('');
   const [uploadFile, setUploadFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorStatus, setErrorStatus] = useState(null);
 
   useEffect(() => {
     const fetchAssignedFolders = async () => {
-      try {
-        const farmerRef = doc(db, 'users', farmerId);
-        const farmerSnapshot = await getDocs(farmerRef); 
+      setIsLoading(true);
+      setErrorStatus(null);
 
-        if (farmerSnapshot.exists()) { 
-          const data = farmerSnapshot.data();
-          setAssignedFolders(data.assignedFolders || []);
+      try {
+        const user = auth.currentUser;
+
+        if (user) {
+          console.log("Current user is authenticated:", user);
+          console.log("Current user's UID:", user?.uid);
+
+          // Use email for checking documents
+          const userQuery = query(collection(db, 'users'), where('email', '==', user.email));
+          const userSnapshot = await getDocs(userQuery);
+
+          if (!userSnapshot.empty) {
+            const userData = userSnapshot.docs[0].data();
+            console.log("User document found:", userData);
+
+            const assignedFoldersArray = userData.assignedFolders || [];
+            console.log("Assigned folders array:", assignedFoldersArray);
+
+            const folderPromises = assignedFoldersArray.map((folderId) => {
+              return getDoc(doc(db, 'folders', folderId))
+                .then((folderSnapshot) => {
+                  if (folderSnapshot.exists()) {
+                    return { id: folderSnapshot.id, ...folderSnapshot.data() };
+                  } else {
+                    console.warn(`Folder document with ID ${folderId} does not exist`);
+                    return null;
+                  }
+                });
+            });
+
+            const folders = await Promise.all(folderPromises);
+            setAssignedFolders(folders.filter((folder) => folder !== null));
+          } else {
+            setErrorStatus('User document does not exist.');
+          }
+        } else {
+          setErrorStatus('No user is currently logged in.');
         }
       } catch (error) {
-        console.error('Error fetching assigned folders:', error.message);
+        setErrorStatus('Error fetching assigned folders: ' + error.message);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchAssignedFolders();
-  }, [farmerId]);
+  }, []); 
 
   const handleFolderChange = (e) => {
     setSelectedFolder(e.target.value);
@@ -61,18 +98,25 @@ const FarmerDashboard = ({ farmerId }) => {
   return (
     <div>
       <h2>Farmer Dashboard</h2>
-      <label>Select Assigned Folder:</label>
-      <select value={selectedFolder} onChange={handleFolderChange}>
-        <option value="" disabled>Select Folder</option>
-        {assignedFolders.map((folderId) => (
-          <option key={folderId} value={folderId}>
-            {folderId}
-          </option>
-        ))}
-      </select>
-      <label>Upload File:</label>
-      <input type="file" onChange={handleFileChange} />
-      <button onClick={handleUpload}>Upload</button>
+      {isLoading && <p>Loading assigned folders...</p>}
+      {errorStatus && <p className="error-message">{errorStatus}</p>}
+
+      {!isLoading && !errorStatus && (
+        <>
+          <label>Select Assigned Folder:</label>
+          <select value={selectedFolder} onChange={handleFolderChange}> 
+            <option value="" disabled>Select Folder</option>
+            {assignedFolders.map((folder) => (
+              <option key={folder.id} value={folder.id}>
+                {folder.name} 
+              </option>
+            ))}
+          </select> 
+          <label>Upload File:</label>
+          <input type="file" onChange={handleFileChange} />
+          <button onClick={handleUpload}>Upload</button>
+        </>
+      )}
     </div>
   );
 };

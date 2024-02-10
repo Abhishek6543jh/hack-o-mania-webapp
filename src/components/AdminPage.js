@@ -2,6 +2,7 @@
 import React from 'react';
 import CreateFolder from './CreateFolder';
 import AssignFolder from './AssignFolder';
+import FolderDetails from './FolderDetails';
 
 const AdminPage = () => {
   return (
@@ -9,6 +10,7 @@ const AdminPage = () => {
       <h1>Welcome, Admin!</h1>
       <CreateFolder />
       <AssignFolder />
+      <FolderDetails />
     </div>
   );
 };
