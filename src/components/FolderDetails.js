@@ -50,18 +50,22 @@ const AllFolders = () => {
           {allFolders.map((folder) => (
             <li
               key={folder.id}
-              className="border border-gray-200 p-4 rounded-md shadow-sm hover:bg-gray-100 cursor-pointer"
+              className="flex items-center border border-gray-100 bg-yellow-100 p-4 rounded-md shadow-md hover:bg-yellow-200 cursor-pointer"
               onClick={() => handleFolderClick(folder.id)}
             >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}> 
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
               <h3 className="text-lg font-medium">{folder.name}</h3>
 
               {selectedFolder === folder.id && (
-                <div className="mt-3"> {/* Content shown on click */}
+                <div className="mt-3"> 
                   <p className="text-gray-500">
                     {folder.description || 'No description available'}
                   </p>
 
                   <ul className="mt-2">
+                    {/* Assuming 'uploads' is an array in Firestore */}
                     {folder.uploads && folder.uploads.length > 0 ? (
                       folder.uploads.map((upload) => (
                         <li key={upload.fileName}>
