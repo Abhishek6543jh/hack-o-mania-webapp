@@ -1,11 +1,40 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import CreateFolder from './CreateFolder';
 import AssignFolder from './AssignFolder';
 import FolderDetails from './FolderDetails';
 import Register from './reg'; // Import your Register component
+import { auth ,db} from '../firebase/config'; // Import auth reference
+import { onAuthStateChanged } from 'firebase/auth';
+import { getDoc,doc } from 'firebase/firestore';
 
 const AdminPage = () => {
   const [selectedTab, setSelectedTab] = useState('folderDetails'); 
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+
+      if (user) {
+        // Additional Firestore check for 'admin' role (modify as needed)
+        const checkAdminRole = async () => {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef); 
+          setIsAdmin(userDoc.exists() && userDoc.data().role === 'admin');
+        }; 
+        checkAdminRole(); 
+      } else {
+        setIsAdmin(false); 
+      }
+    });
+
+    return unsubscribe; 
+  }, []);
+
+
+
 
   const renderSelectedComponent = () => {
     switch (selectedTab) {
@@ -24,6 +53,7 @@ const AdminPage = () => {
 
   return (
     <div>
+    
       {/* Tailwind styled navbar */}
       <nav className="bg-gray-800 p-4 flex justify-between items-center">
         <h1 className="text-xl font-bold text-white">Welcome, Admin!</h1>
