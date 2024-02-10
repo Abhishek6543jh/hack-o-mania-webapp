@@ -1,46 +1,140 @@
 import React, { useState } from 'react';
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  Select,
+  Stack,
+} from '@chakra-ui/react';
 import { auth, db } from '../firebase/config';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { addDoc, collection,doc,setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [regions, setRegions] = useState('');
+  const [crops, setCrops] = useState('');
+
+  const exampleRegions = ['Midwest', 'Northeast', 'South', 'West'];
+  const exampleCrops = ['Corn', 'Soybeans', 'Wheat', 'Rice'];
 
   const handleRegistration = async () => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
-      // Use the user's email as the document ID
-      const userDocRef = doc(db, 'users', user.email); 
+      const userDocRef = doc(db, 'users', user.email);
 
       await setDoc(userDocRef, {
         uid: user.uid,
         email: user.email,
         role: 'farmer',
-        displayName: displayName, 
-        // Add other fields as needed
+        displayName: displayName,
+        assignedRegions: regions.split(',').map((r) => r.trim()),
+        cropExpertise: crops.split(',').map((c) => c.trim()),
       });
 
-      console.log('User registered and data stored in Firestore:', user, userDocRef);
+      console.log(
+        'User registered and data stored in Firestore:',
+        user,
+        userDocRef
+      );
+
+      // Reset form (optional)
+      setEmail('');
+      setPassword('');
+      setDisplayName('');
+      setRegions('');
+      setCrops('');
     } catch (error) {
       console.error('Error registering user:', error.message);
     }
   };
 
   return (
-    <div>
-      <h2>Register</h2>
-      <label>Email:</label>
-      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <label>Password:</label>
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <label>Display Name:</label>
-      <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-      <button onClick={handleRegistration}>Register</button>
-    </div>
+    <Box
+      p={4}
+      maxW={{ base: '100%', md: '400px' }}
+      borderWidth="1px"
+      borderRadius="md"
+      boxShadow="md"
+      mx="auto"
+    >
+      <Stack spacing={3}>
+        <FormControl>
+          <FormLabel>Email</FormLabel>
+          <Input
+            type="text"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </FormControl>
+
+        <FormControl>
+          <FormLabel>Password</FormLabel>
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </FormControl>
+
+        <FormControl>
+          <FormLabel>Display Name</FormLabel>
+          <Input
+            type="text"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            required
+          />
+        </FormControl>
+
+        <FormControl>
+          <FormLabel>Regions</FormLabel>
+          <Select
+            value={regions}
+            onChange={(e) => setRegions(e.target.value)}
+          >
+            <option value="" disabled>
+              Select Region
+            </option>
+            {exampleRegions.map((region) => (
+              <option key={region} value={region}>
+                {region}
+              </option>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl>
+          <FormLabel>Crops</FormLabel>
+          <Select value={crops} onChange={(e) => setCrops(e.target.value)}>
+            <option value="" disabled>
+              Select Crop
+            </option>
+            {exampleCrops.map((crop) => (
+              <option key={crop} value={crop}>
+                {crop}
+              </option>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Button colorScheme="blue" onClick={handleRegistration}>
+          Register
+        </Button>
+      </Stack>
+    </Box>
   );
 };
 
