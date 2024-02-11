@@ -67,6 +67,8 @@ const Register = () => {
       borderRadius="md"
       boxShadow="md"
       mx="auto"
+      bg="gray.800" // Dark background color
+      color="white" // Text color
     >
       <Stack spacing={3}>
         <FormControl>
@@ -76,6 +78,8 @@ const Register = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            bg="gray.700" // Dark background color
+            color="white" // Text color
           />
         </FormControl>
 
@@ -86,6 +90,8 @@ const Register = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            bg="gray.700" // Dark background color
+            color="white" // Text color
           />
         </FormControl>
 
@@ -96,6 +102,8 @@ const Register = () => {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             required
+            bg="gray.700" // Dark background color
+            color="white" // Text color
           />
         </FormControl>
 
@@ -104,6 +112,8 @@ const Register = () => {
           <Select
             value={regions}
             onChange={(e) => setRegions(e.target.value)}
+            bg="gray.700" // Dark background color
+            color="white" // Text color
           >
             <option value="" disabled>
               Select Region
@@ -118,7 +128,12 @@ const Register = () => {
 
         <FormControl>
           <FormLabel>Crops</FormLabel>
-          <Select value={crops} onChange={(e) => setCrops(e.target.value)}>
+          <Select
+            value={crops}
+            onChange={(e) => setCrops(e.target.value)}
+            bg="gray.700" // Dark background color
+            color="white" // Text color
+          >
             <option value="" disabled>
               Select Crop
             </option>

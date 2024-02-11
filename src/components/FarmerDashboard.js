@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { auth, db, storage } from '../firebase/config';
 import { collection, doc, getDocs, getDoc, query, where, updateDoc, arrayUnion } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const FarmerDashboard = () => {
+  const navigate = useNavigate();
   const [assignedFolders, setAssignedFolders] = useState([]);
-  const [selectedFolder, setSelectedFolder] = useState('');
+  const [selectedFolder, setSelectedFolder] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
+  const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorStatus, setErrorStatus] = useState(null);
 
@@ -18,40 +21,34 @@ const FarmerDashboard = () => {
       try {
         const user = auth.currentUser;
 
-        if (user) {
-          console.log("Current user is authenticated:", user);
-          console.log("Current user's UID:", user?.uid);
+        if (!user) {
+          navigate('/');
+          return;
+        }
 
-          // Use email for checking documents
-          const userQuery = query(collection(db, 'users'), where('email', '==', user.email));
-          const userSnapshot = await getDocs(userQuery);
+        const userQuery = query(collection(db, 'users'), where('email', '==', user.email));
+        const userSnapshot = await getDocs(userQuery);
 
-          if (!userSnapshot.empty) {
-            const userData = userSnapshot.docs[0].data();
-            console.log("User document found:", userData);
+        if (!userSnapshot.empty) {
+          const userData = userSnapshot.docs[0].data();
+          const assignedFoldersArray = userData.assignedFolders || [];
 
-            const assignedFoldersArray = userData.assignedFolders || [];
-            console.log("Assigned folders array:", assignedFoldersArray);
+          const folderPromises = assignedFoldersArray.map((folderId) => {
+            return getDoc(doc(db, 'folders', folderId))
+              .then((folderSnapshot) => {
+                if (folderSnapshot.exists()) {
+                  return { id: folderSnapshot.id, ...folderSnapshot.data() };
+                } else {
+                  console.warn(`Folder document with ID ${folderId} does not exist`);
+                  return null;
+                }
+              });
+          });
 
-            const folderPromises = assignedFoldersArray.map((folderId) => {
-              return getDoc(doc(db, 'folders', folderId))
-                .then((folderSnapshot) => {
-                  if (folderSnapshot.exists()) {
-                    return { id: folderSnapshot.id, ...folderSnapshot.data() };
-                  } else {
-                    console.warn(`Folder document with ID ${folderId} does not exist`);
-                    return null;
-                  }
-                });
-            });
-
-            const folders = await Promise.all(folderPromises);
-            setAssignedFolders(folders.filter((folder) => folder !== null));
-          } else {
-            setErrorStatus('User document does not exist.');
-          }
+          const folders = await Promise.all(folderPromises);
+          setAssignedFolders(folders.filter((folder) => folder !== null));
         } else {
-          setErrorStatus('No user is currently logged in.');
+          navigate('/');
         }
       } catch (error) {
         setErrorStatus('Error fetching assigned folders: ' + error.message);
@@ -61,7 +58,7 @@ const FarmerDashboard = () => {
     };
 
     fetchAssignedFolders();
-  }, []); 
+  }, [navigate]);
 
   const handleFolderChange = (e) => {
     setSelectedFolder(e.target.value);
@@ -71,10 +68,14 @@ const FarmerDashboard = () => {
     setUploadFile(e.target.files[0]);
   };
 
+  const handleDescriptionChange = (e) => {
+    setDescription(e.target.value);
+  };
+
   const handleUpload = async () => {
     try {
-      if (!selectedFolder || !uploadFile) {
-        console.error('Selected folder or file is not valid');
+      if (!selectedFolder || !uploadFile || !description) {
+        console.error('Selected folder, file, or description is not valid');
         return;
       }
 
@@ -85,40 +86,144 @@ const FarmerDashboard = () => {
 
       const folderDocRef = doc(db, 'folders', selectedFolder);
       await updateDoc(folderDocRef, {
-        uploads: arrayUnion({ fileName: uploadFile.name, downloadURL }),
+        uploads: arrayUnion({ fileName: uploadFile.name, downloadURL, description }),
       });
 
-      setSelectedFolder('');
+      setSelectedFolder(null);
       setUploadFile(null);
+      setDescription('');
     } catch (error) {
       console.error('Error uploading file:', error.message);
     }
   };
 
+  const findFolderName = (folderId) => {
+    const selectedFolder = assignedFolders.find((folder) => folder.id === folderId);
+    return selectedFolder ? selectedFolder.name : '';
+  };
+
   return (
-    <div>
-      <h2>Farmer Dashboard</h2>
+    <div style={styles.container}>
+      <h2 style={styles.heading}>Farmer Dashboard</h2>
       {isLoading && <p>Loading assigned folders...</p>}
       {errorStatus && <p className="error-message">{errorStatus}</p>}
 
       {!isLoading && !errorStatus && (
-        <>
-          <label>Select Assigned Folder:</label>
-          <select value={selectedFolder} onChange={handleFolderChange}> 
-            <option value="" disabled>Select Folder</option>
-            {assignedFolders.map((folder) => (
-              <option key={folder.id} value={folder.id}>
-                {folder.name} 
-              </option>
-            ))}
-          </select> 
-          <label>Upload File:</label>
-          <input type="file" onChange={handleFileChange} />
-          <button onClick={handleUpload}>Upload</button>
-        </>
+        <div style={styles.formContainer}>
+          <div style={styles.fileExplorer}>
+            <div style={styles.folderList}>
+              <h3>Folders:</h3>
+              {assignedFolders.map((folder) => (
+                <div
+                  key={folder.id}
+                  style={selectedFolder === folder.id ? { ...styles.folderItem, ...styles.selectedFolderItem } : styles.folderItem}
+                  onClick={() => setSelectedFolder(folder.id)}
+                >
+                  <span>{folder.name}</span>
+                </div>
+              ))}
+            </div>
+            {selectedFolder && (
+              <div style={styles.folderDetails}>
+                <label style={styles.label}>Selected Folder:</label>
+                <div style={styles.selectedFolder}>{selectedFolder && findFolderName(selectedFolder)}</div>
+                <label style={styles.label}>Upload File:</label>
+                <input type="file" onChange={handleFileChange} style={styles.fileInput} />
+                <label style={styles.label}>Description:</label>
+                <textarea value={description} onChange={handleDescriptionChange} style={styles.textArea} />
+                <button onClick={handleUpload} style={styles.uploadButton}>
+                  Upload
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
+};
+
+const styles = {
+  container: {
+    maxWidth: '400px',
+    margin: '50px auto',
+    padding: '20px',
+    borderRadius: '8px',
+    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+    backgroundColor: '#fff',
+  },
+  heading: {
+    fontSize: '24px',
+    marginBottom: '20px',
+    textAlign: 'center',
+    color: '#333',
+  },
+  formContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  label: {
+    marginBottom: '8px',
+    color: '#555',
+  },
+  select: {
+    width: '100%',
+    padding: '8px',
+    marginBottom: '16px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+  },
+  fileInput: {
+    width: '100%',
+    padding: '8px',
+    marginBottom: '16px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+  },
+  uploadButton: {
+    backgroundColor: '#4CAF50',
+    color: '#fff',
+    padding: '10px 15px',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '16px',
+  },
+  fileExplorer: {
+    display: 'flex',
+  },
+  folderList: {
+    flex: '1',
+    marginRight: '20px',
+  },
+  folderItem: {
+    marginBottom: '8px',
+    cursor: 'pointer',
+    padding: '8px',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+  },
+  folderDetails: {
+    flex: '2',
+  },
+  selectedFolderItem: {
+    backgroundColor: '#4CAF50',
+    color: '#fff',
+  },
+  selectedFolder: {
+    marginBottom: '16px',
+    padding: '8px',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+  },
+  textArea: {
+    width: '100%',
+    padding: '8px',
+    marginBottom: '16px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+    resize: 'vertical',
+  },
 };
 
 export default FarmerDashboard;
