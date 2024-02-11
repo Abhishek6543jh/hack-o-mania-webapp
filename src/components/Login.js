@@ -5,13 +5,17 @@ import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { Link as RouterLink } from 'react-router-dom';
 import { Box, Button, Link } from '@chakra-ui/react';
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
+      setError(null); // Reset error state
+
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
@@ -32,6 +36,7 @@ const Login = () => {
 
       console.log('User logged in');
     } catch (error) {
+      setError('Invalid email or password. Please try again.'); // Set error message
       console.error('Error logging in:', error.message);
     }
   };
@@ -41,13 +46,23 @@ const Login = () => {
       <div style={styles.textContainer}>
         <h1 style={styles.pageHeading}>Welcome </h1>
         <p style={styles.description}>Discover a new way to connect and collaborate.</p>
-            <br></br>
-      
+        <br />
+        <ps style={{ textAlign: 'center', marginTop: '16px' }}>
+        <Link as={RouterLink} to="/farmer-restration">
+              Click Here To Register as a new farmer.
+            </Link>
+        </ps>
+        
       </div>
       <div style={styles.container}>
         <img src="/images/imge1.jpg" alt="Login" style={styles.image} />
         <div style={styles.formContainer}>
           <h2 style={styles.heading}>Login</h2>
+          {error && (
+            <p style={{ color: 'red', marginBottom: '16px', textAlign: 'center' }}>
+              {error}
+            </p>
+          )}
           <label style={styles.label}>Email:</label>
           <input
             type="email"
@@ -65,6 +80,10 @@ const Login = () => {
           <button onClick={handleLogin} style={styles.button}>
             Login
           </button>
+          <p style={{ textAlign: 'center', marginTop: '16px' }}>
+            {' '}
+            
+          </p>
         </div>
       </div>
     </div>
@@ -73,7 +92,7 @@ const Login = () => {
 
 const styles = {
   textContainer: {
-    marginTop:'120px',
+    marginTop: '120px',
     textAlign: 'center',
     marginBottom: '40px',
   },

@@ -7,10 +7,12 @@ import {
   Input,
   Select,
   Stack,
+  useToast,
 } from '@chakra-ui/react';
 import { auth, db } from '../firebase/config';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -22,8 +24,15 @@ const Register = () => {
   const exampleRegions = ['Midwest', 'Northeast', 'South', 'West'];
   const exampleCrops = ['Corn', 'Soybeans', 'Wheat', 'Rice'];
 
+  const toast = useToast();
+  const navigate = useNavigate();
+
   const handleRegistration = async () => {
     try {
+      if (!email || !password || !displayName || !regions || !crops) {
+        throw new Error('Please fill in all the required fields.');
+      }
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -42,11 +51,17 @@ const Register = () => {
         cropExpertise: crops.split(',').map((c) => c.trim()),
       });
 
-      console.log(
-        'User registered and data stored in Firestore:',
-        user,
-        userDocRef
-      );
+      toast({
+        title: 'Registration Successful',
+        description: `${displayName} is registered as a farmer.`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+        position: 'top',
+      });
+
+      // Redirect to the main page after successful registration
+      navigate('/');
 
       // Reset form (optional)
       setEmail('');
@@ -55,6 +70,15 @@ const Register = () => {
       setRegions('');
       setCrops('');
     } catch (error) {
+      toast({
+        title: 'Registration Failed',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+        position: 'top',
+      });
+
       console.error('Error registering user:', error.message);
     }
   };
@@ -67,8 +91,9 @@ const Register = () => {
       borderRadius="md"
       boxShadow="md"
       mx="auto"
-      bg="gray.800" // Dark background color
-      color="white" // Text color
+      bg="white" // Light background color
+      color="black" // Text color
+      textAlign="center" // Center align the form
     >
       <Stack spacing={3}>
         <FormControl>
@@ -78,8 +103,6 @@ const Register = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            bg="gray.700" // Dark background color
-            color="white" // Text color
           />
         </FormControl>
 
@@ -90,30 +113,24 @@ const Register = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            bg="gray.700" // Dark background color
-            color="white" // Text color
           />
         </FormControl>
 
         <FormControl>
           <FormLabel>Display Name</FormLabel>
-          <Input
+          <Input 
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             required
-            bg="gray.700" // Dark background color
-            color="white" // Text color
           />
         </FormControl>
 
         <FormControl>
           <FormLabel>Regions</FormLabel>
-          <Select
+          <Select required
             value={regions}
             onChange={(e) => setRegions(e.target.value)}
-            bg="gray.700" // Dark background color
-            color="white" // Text color
           >
             <option value="" disabled>
               Select Region
@@ -128,11 +145,9 @@ const Register = () => {
 
         <FormControl>
           <FormLabel>Crops</FormLabel>
-          <Select
+          <Select required
             value={crops}
             onChange={(e) => setCrops(e.target.value)}
-            bg="gray.700" // Dark background color
-            color="white" // Text color
           >
             <option value="" disabled>
               Select Crop

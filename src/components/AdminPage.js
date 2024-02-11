@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import CreateFolder from './CreateFolder';
 import AssignFolder from './AssignFolder';
 import FolderDetails from './FolderDetails';
-import Register from './reg';
 import { auth, db } from '../firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getDoc, doc } from 'firebase/firestore';
@@ -24,7 +23,7 @@ const AdminPage = () => {
 
         if (userDoc.exists()) {
           const userData = userDoc.data();
-            console.log(userData.email)
+          console.log(userData.email)
           if (userData && userData.role === 'admin') {
             setIsAdmin(true);
           } else {
@@ -53,8 +52,6 @@ const AdminPage = () => {
         return <CreateFolder />;
       case 'assignFolder':
         return <AssignFolder />;
-      case 'reg':
-        return <Register />;
       default:
         return null;
     }
@@ -88,14 +85,6 @@ const AdminPage = () => {
               onClick={() => setSelectedTab('assignFolder')}
             >
               Assign Folder
-            </button>
-          </li>
-          <li>
-            <button 
-              className="px-4 py-2 rounded-md text-white hover:bg-gray-700 focus:outline-none focus:ring focus:ring-gray-500 focus:ring-offset-2"
-              onClick={() => setSelectedTab('reg')}
-            >
-              Register New Farmer
             </button>
           </li>
         </ul>
