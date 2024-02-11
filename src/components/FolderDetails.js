@@ -107,6 +107,7 @@ const AllFolders = () => {
                           ))
                       ) : (
                         <p className="text-gray-500">No uploaded files</p>
+                        
                       )}
                   </p>
                 </div>
