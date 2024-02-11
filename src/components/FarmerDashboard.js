@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { auth, db, storage } from '../firebase/config';
 import { collection, doc, getDocs, getDoc, query, where, updateDoc, arrayUnion } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const FarmerDashboard = () => {
   const navigate = useNavigate();
@@ -92,8 +94,14 @@ const FarmerDashboard = () => {
       setSelectedFolder(null);
       setUploadFile(null);
       setDescription('');
+
+      // Display a success toast notification
+      toast.success('File uploaded successfully!', { position: 'top-right' });
     } catch (error) {
       console.error('Error uploading file:', error.message);
+
+      // Display an error toast notification
+      toast.error(`Error uploading file: ${error.message}`, { position: 'top-right' });
     }
   };
 
@@ -139,9 +147,12 @@ const FarmerDashboard = () => {
           </div>
         </div>
       )}
+
+      <ToastContainer position="top-right" autoClose={1000} />
     </div>
   );
 };
+
 
 const styles = {
   container: {

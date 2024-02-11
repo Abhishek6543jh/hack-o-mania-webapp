@@ -9,6 +9,8 @@ import {
   Input,
   useColorModeValue,
 } from '@chakra-ui/react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const CreateFolder = () => {
   const [folderName, setFolderName] = useState('');
@@ -20,15 +22,26 @@ const CreateFolder = () => {
         name: folderName,
       });
 
+      toast.success(`Folder "${folderName}" created successfully`);
       console.log('Folder created:', folderName);
       // You can add additional logic or UI updates as needed
     } catch (error) {
+      toast.error(`Error creating folder: ${error.message}`);
       console.error('Error creating folder:', error.message);
     }
   };
 
   return (
-    <Box p={4} maxW="md" borderWidth="1px" borderRadius="md" boxShadow="md">
+    <Box
+      p={8}
+      maxW="md"
+      borderWidth="1px"
+      borderRadius="md"
+      boxShadow="lg"
+      mx="auto"
+      my="auto"
+      bg={useColorModeValue('white', 'gray.800')}
+    >
       <FormControl>
         <FormLabel>Folder Name:</FormLabel>
         <Input
@@ -40,13 +53,12 @@ const CreateFolder = () => {
         />
       </FormControl>
 
-      <Button
-        mt={4}
-        colorScheme="blue"
-        onClick={handleCreateFolder}
-      >
+      <Button mt={4} colorScheme="blue" onClick={handleCreateFolder}>
         Create Folder
       </Button>
+
+      {/* Toast Container for notifications */}
+      <ToastContainer position="top-center" autoClose={1000} />
     </Box>
   );
 };

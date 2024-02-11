@@ -6,6 +6,7 @@ import Login from './components/Login';
 
 import AdminPage from './components/AdminPage';
 import FarmerDashboard from './components/FarmerDashboard';
+import Register from './components/reg';
 
 
 
@@ -17,6 +18,7 @@ const App = () => {
       <Route path="/" element={<Login />} />
       <Route path="/admin-dashboard" element={<AdminPage />} />
       <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
+      <Route path="/farmer-restration" element={<Register />} />
       
 
       </Routes>
