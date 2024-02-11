@@ -40,17 +40,19 @@ const AllFolders = () => {
   };
 
   return (
-    <div className="container mx-auto p-6"> {/* Example container for layout */}
-      <h2>All Folders</h2>
-      {isLoading && <p>Loading folders...</p>}
-      {errorStatus && <p className="error-message">{errorStatus}</p>}
+    <div className="container mx-auto p-6"> {/* Tailwind container setup */}
+      <h2 className="text-2xl font-bold mb-4">All Folders</h2> 
+      {isLoading && <p className="text-gray-600">Loading folders...</p>}
+      {errorStatus && <p className="text-red-500">{errorStatus}</p>}
 
       {!isLoading && !errorStatus && (
-        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">  {/* Responsive grid */}
+        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> 
           {allFolders.map((folder) => (
             <li
               key={folder.id}
-              className="flex items-center border border-gray-100 bg-yellow-100 p-4 rounded-md shadow-md hover:bg-yellow-200 cursor-pointer"
+              className={`flex items-center border border-gray-200 bg-yellow-100 p-4 rounded-md shadow-md hover:bg-yellow-200 cursor-pointer ${
+                selectedFolder === folder.id ? 'expanded' : '' 
+              }`} 
               onClick={() => handleFolderClick(folder.id)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}> 
@@ -58,26 +60,25 @@ const AllFolders = () => {
               </svg>
               <h3 className="text-lg font-medium">{folder.name}</h3>
 
-              {selectedFolder === folder.id && (
+              {selectedFolder === folder.id && ( 
                 <div className="mt-3"> 
                   <p className="text-gray-500">
                     {folder.description || 'No description available'}
                   </p>
 
                   <ul className="mt-2">
-                    {/* Assuming 'uploads' is an array in Firestore */}
                     {folder.uploads && folder.uploads.length > 0 ? (
                       folder.uploads.map((upload) => (
                         <li key={upload.fileName}>
                           <img
                             src={upload.downloadURL}
                             alt={upload.fileName}
-                            style={{ maxWidth: '200px' }}
+                            className="max-w-xs shadow-md" // Apply Tailwind for width
                           />
                         </li>
                       ))
                     ) : (
-                      <li>No uploaded files</li>
+                      <li className="text-gray-500">No uploaded files</li> 
                     )}
                   </ul>
                 </div>
@@ -89,5 +90,7 @@ const AllFolders = () => {
     </div>
   );
 };
+  
+
 
 export default AllFolders;
